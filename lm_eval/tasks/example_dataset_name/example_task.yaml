@@ -1,0 +1,7 @@
+task: example_task
+dataset_path: json
+dataset_name: null       # we’re not using a named HF dataset
+dataset_kwargs:
+  data_files:
+    # single file:
+    - data/example_dataset.json
