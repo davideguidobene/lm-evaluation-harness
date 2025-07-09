@@ -9,7 +9,7 @@
 #SBATCH --mem-per-cpu=100GB
 #SBATCH --output=/cluster/home/dguidobene/logs/lmh/lmh.out
 #SBATCH --error=/cluster/home/dguidobene/logs/lmh/lmh.err
-#SBATCH --gpus=rtx_4090:1
+#SBATCH --gpus=rtx_3090:1
 #SBATCH --tmp=500G
 
 module load--ignore_cache eth_proxy
@@ -17,8 +17,9 @@ module load--ignore_cache eth_proxy
 export HF_HOME=/cluster/scratch/dguidobene
 source /cluster/scratch/dguidobene/venvs/lmharness/bin/activate
 lm_eval \
-  --model hf \
-  --model_args pretrained=TinyLlama/TinyLlama-1.1B-Chat-v1.0 \
+  --model vllm \
+  --model_args pretrained=meta-llama/Llama-3.2-1B-Instruct \
+  --apply_chat_template \
   --tasks example_task \
-  --device gpu \
-  --batch_size 1
+  --device cuda:0 \
+  --batch_size auto

@@ -6,6 +6,8 @@ dataset_kwargs:
     # single file:
     - data/example_dataset.json
 
+#task_module: utils.MyCustomTask
+
 # since there is no named split, the JSON loader calls it "train" by default:
 test_split: train
 
