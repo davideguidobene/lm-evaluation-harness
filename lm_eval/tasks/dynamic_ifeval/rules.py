@@ -1,6 +1,5 @@
-import random, string
+import random, string, warnings
 from typing import Union
-import warnings
 from string import ascii_lowercase
 
 

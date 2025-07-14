@@ -1,7 +1,7 @@
-import random, yaml
-from rules import (randomize_rules_letter_must_be_in, count_number_of, sum_characters_sum)
-from utils import to_ordinal, default_empty_rules, get_texts, tuple_representer, tuple_constructor
+from lm_eval.tasks.dynamic_ifeval.rules import (randomize_rules_letter_must_be_in, count_number_of, sum_characters_sum)
+from lm_eval.tasks.dynamic_ifeval.utils import to_ordinal, default_empty_rules, get_texts, tuple_representer, tuple_constructor
 import copy
+import random, yaml
 
 
 def sample_rules(rules, randomize_rules):

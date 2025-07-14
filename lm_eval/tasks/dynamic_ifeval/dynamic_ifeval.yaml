@@ -1,10 +1,11 @@
 task: dynamic_ifeval
-dataset_path: json
+#dataset_path: json
 dataset_name: null       # we’re not using a named HF dataset
 dataset_kwargs:
-  data_files:
+  hf_dataset_name : david-e-g/Texts_Samples
+  #data_files:
     # single file:
-    - data/texts_dataset.json
+  #  - data/texts_dataset.json
 
 #generation_kwargs:
 #  max_gen_toks: 8192

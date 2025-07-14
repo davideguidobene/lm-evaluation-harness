@@ -1,19 +1,20 @@
-import datasets
-from create_dataset import create_dataset, save_dataset
-from utils import TextPool, get_texts
-from convert_yaml_to_hfdataset import convert_yaml_to_hfdataset
+
+from lm_eval.tasks.dynamic_ifeval.create_dataset import create_dataset, save_dataset
+from lm_eval.tasks.dynamic_ifeval.utils import TextPool
+from lm_eval.tasks.dynamic_ifeval.convert_yaml_to_hfdataset import convert_yaml_to_hfdataset
+from lm_eval.tasks.dynamic_ifeval.evaluate_answers_hf import evaluate_answer
+
 from itertools import chain
 from typing import List, Tuple, Dict, Set, Any
-from datasets import Dataset, Features, Value, Sequence
-from evaluate_answers_hf import evaluate_answer
-import ast
+from datasets import Dataset, Features, Value, Sequence, load_dataset
+import datasets
 
-'''
+
 def get_texts(
     texts_dataset: Dataset,
     texts_types_to_use: list[str] = None,
     texts_types_to_exclude: list[str] = []
-) -> TextPool:
+):
     print(texts_dataset)
     features = list(texts_dataset.features.keys())
     print(features)
@@ -29,13 +30,14 @@ def get_texts(
     print(ls)
     print("Length of texts:", len(ls))
     return TextPool(ls)
-'''
+
 
 def custom_dataset(*args, **kwargs):
     print("Positional args:", args)
     print("Keyword args:", kwargs)
     
-    texts = get_texts()
+    texts_dataset = load_dataset("david-e-g/Texts_Samples")["train"]
+    texts = get_texts(texts_dataset)
     dataset = create_dataset(texts=texts)
     convert_yaml_to_hfdataset()
     hf_dataset = Dataset.load_from_disk("data/hf_dataset")

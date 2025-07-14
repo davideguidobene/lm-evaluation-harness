@@ -1,8 +1,8 @@
-import yaml, pickle, re
-from rules import letter_must_be_in, number_of_must_be, sum_characters_must_be, count_number_of, sum_characters_sum
-from utils import load_dataset
+from lm_eval.tasks.dynamic_ifeval.rules import letter_must_be_in, number_of_must_be, sum_characters_must_be, count_number_of, sum_characters_sum
+from lm_eval.tasks.dynamic_ifeval.utils import load_dataset
+
 from datasets import Dataset
-import ast
+import yaml, pickle, re, ast
 
 
 def aux_evaluate_answer(answer, rules, rules_letter_must_be_in, count_number, sum_characters_value):
