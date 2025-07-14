@@ -7,8 +7,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=100GB
-#SBATCH --output=/cluster/home/dguidobene/logs/lmh/lmh.out
-#SBATCH --error=/cluster/home/dguidobene/logs/lmh/lmh.err
+#SBATCH --output=/cluster/home/dguidobene/logs/lmh/lmh2.out
+#SBATCH --error=/cluster/home/dguidobene/logs/lmh/lmh2.err
 #SBATCH --gpus=rtx_3090:1
 #SBATCH --tmp=500G
 

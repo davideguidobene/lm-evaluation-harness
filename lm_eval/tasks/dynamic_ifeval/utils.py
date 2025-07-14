@@ -1,110 +1,82 @@
-import os, json, random, yaml
+
+from lm_eval.tasks.dynamic_ifeval.helper.create_dataset import create_dataset, save_dataset
+from lm_eval.tasks.dynamic_ifeval.helper.utils import TextPool
+from lm_eval.tasks.dynamic_ifeval.helper.convert_yaml_to_hfdataset import convert_yaml_to_hfdataset
+from lm_eval.tasks.dynamic_ifeval.helper.evaluate_answers_hf import evaluate_answer
+
 from itertools import chain
+from typing import List, Tuple, Dict, Set, Any
+from datasets import Dataset, Features, Value, Sequence, load_dataset
+import datasets, ast
 
 
-def to_ordinal(n):
-    """
-    Convert an integer to its ordinal string representation. Examples:
-        1 -> '1st'
-        2 -> '2nd'
-        11 -> '11th'
-        21 -> '21st'
-    """
-    if 11 <= (n % 100) <= 13:
-        suffix = 'th'
-    else:
-        last_digit = n % 10
-        if last_digit == 1:
-            suffix = 'st'
-        elif last_digit == 2:
-            suffix = 'nd'
-        elif last_digit == 3:
-            suffix = 'rd'
-        else:
-            suffix = 'th'
-    return f"{n}{suffix}"
+def get_texts(
+    texts_dataset: Dataset,
+    texts_types_to_use: list[str] = None,
+    texts_types_to_exclude: list[str] = []
+):
+    print(texts_dataset)
+    features = list(texts_dataset.features.keys())
+    print(features)
+    for feature in features:
+        print(type(texts_dataset[feature]))
+        print(texts_dataset[feature])
+        print("AND")
+        print(type(texts_dataset[feature][0]))
+        print(texts_dataset[feature][0])
+    ls = list(chain.from_iterable(
+        texts_dataset[feature][0] for feature in features
+    ))
+    print(ls)
+    print("Length of texts:", len(ls))
+    return TextPool(ls)
 
 
-class TextPool(list):
-    def __init__(self, texts):
-        super().__init__(texts)  # Initialize base list
-        random.shuffle(self)
-        self.__pos__ = 0
-
-    def get_texts(self):
-        return list(self)
+def custom_dataset(*args, **kwargs):
+    print("Positional args:", args)
+    print("Keyword args:", kwargs)
     
-    def get(self):
-        if self.__pos__ >= len(self):
-            self.__pos__ = 0
-        text = self[self.__pos__]
-        self.__pos__ += 1
-        return text
+    texts_dataset = load_dataset("david-e-g/Texts_Samples")["train"]
+    texts = get_texts(texts_dataset)
+    dataset = create_dataset(texts=texts)
+    save_dataset(dataset)
+    convert_yaml_to_hfdataset()
+    hf_dataset = Dataset.load_from_disk("data/hf_dataset")
+    return {"train": hf_dataset}
+
+
+def process_docs(dataset: datasets.Dataset) -> datasets.Dataset:
     
-    def copy(self):
-        texts = TextPool(self.get_texts())
-        texts.__pos__ = self.__pos__
-        return texts
-
-
-def get_texts(texts_types_to_use=None, texts_types_to_exclude=[]) -> TextPool:
-    # default will return all texts
-    if (texts_types_to_use is None) == (texts_types_to_exclude is None):
-        raise ValueError("You must provide either texts_types_to_use or texts_types_to_exclude, but not both.")
-    json_file = os.path.join(os.path.dirname(__file__), "data/texts_dataset.json")
-    with open(json_file, "r") as f:
-        texts_dataset = json.load(f)
-    if texts_types_to_use is not None:
-        return TextPool(list(chain.from_iterable(
-            texts_dataset[key] for key in texts_types_to_use if key in texts_dataset
-        )))
-    else:
-        return TextPool(list(chain.from_iterable(
-            texts_dataset[key] for key in texts_dataset if key not in texts_types_to_exclude
-        )))
-
-
-def default_empty_rules():
-    with open("config.yaml", "r") as config_file:
-        config = yaml.safe_load(config_file)
-        
-    rules = config["rules"]
-    randomize_rules = config["randomize_rules"]
+    print("Processing dataset...")
+    print(type(dataset))
+    print(dataset)
     
-    rules["letter_must_be_in"]["enabled"] = False
-    rules["letter_must_be_in"]["randomize_number_letters"] = False
-    rules["letter_must_be_in"]["number_letters"] = 0
-    rules["letter_must_be_in"]["randomize_size_set_accepted_letters"] = False
-    rules["letter_must_be_in"]["size_set_accepted_letters"] = 0
-    for key in rules["count_number_of"]:
-        rules["count_number_of"][key]["enabled"] = False
-    rules["sum_characters_must_be"]["enabled"] = False
+    #texts = get_texts(dataset)
+    #my_list_dataset = create_dataset(texts=texts)
+    #save_dataset(my_list_dataset)
+    #my_dataset = to_hf_dataset(my_list_dataset)
     
-    randomize_rules["sample_rules"] = False
-    randomize_rules["size_rules_to_sample"] = 0
-    randomize_rules["sample_count_rules"] = False
-    randomize_rules["size_count_rules_to_sample"] = 0
-    
-    return rules, randomize_rules
+    def _process_doc(doc):
+        #ctx = doc["ctx_a"] + " " + doc["ctx_b"].capitalize()
+        out_doc = {
+            "query": doc["prompt"],
+            "gold": "",
+            **doc
+        }
+        return out_doc
 
+    return dataset.map(_process_doc)
 
-def tuple_representer(dumper, data):
-    return dumper.represent_list(list(data))
-
-
-def tuple_constructor(loader, node):
-    # Convert the YAML sequence back into a tuple.
-    return tuple(loader.construct_sequence(node))
-
-
-def load_dataset(filename="data/dataset.yaml"):
-    yaml.add_representer(tuple, tuple_representer)
-    yaml.add_constructor(u'tag:yaml.org,2002:python/tuple', tuple_constructor)
-    with open(filename, "r") as f:
-        return yaml.safe_load(f)
-    
-    
-def get_config():    
-    with open("config.yaml", "r") as config_file:
-        config = yaml.safe_load(config_file)
-    return config
+def process_results(doc, results):
+    print("Processing results...")
+    print(results)
+    print("Now printing the doc:")
+    print(doc)
+    acc = [evaluate_answer(answer, doc["rules"], ast.literal_eval(doc["rules_letter_must_be_in"]),
+                                                    doc["count_number"], doc["sum_characters_value"])
+                                   for answer in results]
+    print("Accuracy:", acc)
+    acc = sum(acc) / len(acc)
+    return {
+        "acc": acc
+    }

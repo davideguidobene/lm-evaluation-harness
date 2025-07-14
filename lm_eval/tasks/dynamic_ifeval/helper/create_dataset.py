@@ -1,7 +1,6 @@
-from lm_eval.tasks.dynamic_ifeval.rules import (randomize_rules_letter_must_be_in, count_number_of, sum_characters_sum)
-from lm_eval.tasks.dynamic_ifeval.utils import to_ordinal, default_empty_rules, get_texts, tuple_representer, tuple_constructor
-import copy
-import random, yaml
+from lm_eval.tasks.dynamic_ifeval.helper.rules import (randomize_rules_letter_must_be_in, count_number_of, sum_characters_sum)
+from lm_eval.tasks.dynamic_ifeval.helper.utils import to_ordinal, default_empty_rules, get_texts, tuple_representer, tuple_constructor
+import copy, random, yaml, os
 
 
 def sample_rules(rules, randomize_rules):
@@ -199,6 +198,9 @@ def save_dataset(dataset, filename="data/dataset.yaml"):
             "count_number": make_serializable(count_number),
             "sum_characters_value": sum_characters_value
         })
+        
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    
     with open(filename, "w") as f:
         yaml.dump(data_to_save, f, allow_unicode=True)
     print(f"Dataset saved to {filename}")
